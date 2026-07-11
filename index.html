@@ -453,7 +453,7 @@
 // In Google Sheets: File > Share > Publish to web > select the
 // "Monthly Reports Data" tab > format "Comma-separated values (.csv)" > Publish.
 // Copy the link it gives you and paste it below, inside the quotes.
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTn63pvX4zfCVY9qdZL2aFZ0F4N-HLpVzmfi8PqST6b4TuOWm3rX9PZJk6fHgxj1CN53SQEPtx4VhBa/pub?gid=896103846&single=true&output=csv";
+const SHEET_CSV_URL = "PASTE_YOUR_PUBLISHED_CSV_LINK_HERE";
 
 // Static reference data — camps, touchpoints, HACCP sections never change month to month
 const CAMPS_META = [{"code": "ACL", "name": "Arusha Coffee Lodge", "region": "Tanzania"}, {"code": "TTT", "name": "Tarangire Treetops", "region": "Tanzania"}, {"code": "TMN", "name": "The Manor at Ngorongoro", "region": "Tanzania"}, {"code": "SPC", "name": "Serengeti Pioneer Camp", "region": "Tanzania"}, {"code": "SMC", "name": "Serengeti Migration Camp", "region": "Tanzania"}, {"code": "SXR", "name": "Serengeti Explorer", "region": "Tanzania"}, {"code": "NXR", "name": "Ngorongoro Explorer", "region": "Tanzania"}, {"code": "KLZ", "name": "Kilindi Zanzibar", "region": "Tanzania"}, {"code": "EKM", "name": "Elsa's Kopje Meru", "region": "Kenya"}, {"code": "TCA", "name": "Tortilis Camp Amboseli", "region": "Kenya"}, {"code": "SRM", "name": "Sand River Masai Mara", "region": "Kenya"}, {"code": "EPC", "name": "Elephant Pepper Camp", "region": "Kenya"}, {"code": "LEPC", "name": "Little Elephant Pepper Camp", "region": "Kenya"}, {"code": "LTC", "name": "Loisaba Tented Camp", "region": "Kenya"}, {"code": "LSB", "name": "Loisaba Star Beds", "region": "Kenya"}, {"code": "LLS", "name": "Loisaba Lodo Springs", "region": "Kenya"}, {"code": "LSC", "name": "Lewa Safari Camp", "region": "Kenya"}, {"code": "KHL", "name": "Kifaru House Lewa", "region": "Kenya"}];
@@ -807,15 +807,39 @@ function normalizeMonth(raw){
 }
 
 function transformRows(rows){
+
   return rows
-    .filter(r => r["Camp Code"] && String(r["Camp Code"]).trim() !== "")
-    .map(r=>{
-      const out = {...r};
-      NUMERIC_FIELDS.forEach(f=>{ if(out[f]!==undefined && out[f]!=="") out[f] = parseFloat(out[f]); });
-      out["Report Month"] = normalizeMonth(out["Report Month"]);
-      return out;
+    .filter(r => r["Camp / Property"] && String(r["Camp / Property"]).trim() !== "")
+    .map(r => {
+
+      const campName = String(r["Camp / Property"]).trim();
+
+      const camp = CAMPS_META.find(c =>
+        c.name.toLowerCase().includes(campName.toLowerCase()) ||
+        campName.toLowerCase().includes(c.name.toLowerCase())
+      );
+
+      return {
+        "Camp Code": camp ? camp.code : campName.substring(0,3).toUpperCase(),
+        "Camp Name": campName,
+        "Region": camp ? camp.region : "Unknown",
+        "Report Month": normalizeMonth(r["Month & Year"]),
+        "Head Chef": r["Head Chef"] || "",
+        "General Manager": "",
+        "Kitchen Feedback %": parseFloat(r["Kitchen Feedback Score %"] || 0),
+        "HACCP %": parseFloat(r["HACCP Score %"] || 0),
+        "Overall Score %": parseFloat(r["Overall Score %"] || 0),
+        "Result": r["Result"] || "",
+        "Open Maintenance Issues": parseFloat(r["Open Maint. Issues"] || 0),
+        "Staff Recognitions": parseFloat(r["Staff Recognitions"] || 0),
+        "Canteen Completed?": "No",
+        "Canteen HACCP %": 0,
+        "KT1":0,"KT2":0,"KT3":0,"KT4":0,"KT5":0,"KT6":0,"KT7":0,"KT8":0,
+        "HC1":0,"HC2":0,"HC3":0,"HC4":0,"HC5":0,"HC6":0,"HC7":0,"HC8":0,"HC9":0,"HC10":0,"HC11":0,
+        "CC1":0,"CC2":0,"CC3":0,"CC4":0,"CC5":0,"CC6":0,"CC7":0,"CC8":0,"CC9":0,"CC10":0,"CC11":0
+      };
     })
-    .filter(r => r["Overall Score %"]!==undefined && !isNaN(r["Overall Score %"]));
+    .filter(r => !isNaN(r["Overall Score %"]));
 }
 
 function setStatus(mode, when){
