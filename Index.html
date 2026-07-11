@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elewana — Head Chef Monthly Shift Report | Board Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@1,9..144,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root{
+    --cream:#F7F2E7;
+    --cream-deep:#EFE6D2;
+    --charcoal:#2B2721;
+    --charcoal-soft:#5B5347;
+    --gold:#B8935A;
+    --gold-deep:#8C6A34;
+    --gold-pale:#E4D3B0;
+    --forest:#3F5D45;
+    --forest-pale:#E1EAE1;
+    --amber:#A8791F;
+    --amber-pale:#F3E7CC;
+    --brick:#9C4A3C;
+    --brick-pale:#F3E0DB;
+    --line:#DDD0B0;
+    --white:#FFFFFF;
+    --shadow: 0 1px 2px rgba(43,39,33,0.06), 0 8px 24px -12px rgba(43,39,33,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cream);
+    color:var(--charcoal);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .display{font-family:'Fraunces',serif;}
+  ::selection{background:var(--gold-pale);}
+
+  a{color:inherit;}
+
+  /* ---------- Header ---------- */
+  header.top-bar{
+    background:var(--charcoal);
+    color:var(--cream);
+    padding:22px 44px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    border-bottom:3px solid var(--gold);
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:18px;
+    flex-wrap:wrap;
+  }
+  .brand .wordmark{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:28px;
+    color:var(--gold-pale);
+    letter-spacing:0.3px;
+  }
+  .brand .tagline{
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#C9C1B2;
+    font-weight:600;
+  }
+  .meta-block{
+    text-align:right;
+    font-size:12px;
+    color:#C9C1B2;
+    line-height:1.6;
+  }
+  .meta-block strong{color:var(--cream);font-weight:600;}
+  .print-btn{
+    background:transparent;
+    border:1px solid #6b6455;
+    color:#E8E1D2;
+    font-family:'Inter',sans-serif;
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:8px 14px;
+    border-radius:3px;
+    cursor:pointer;
+    margin-left:14px;
+  }
+  .print-btn:hover{border-color:var(--gold);color:var(--gold-pale);}
+
+  .status-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:10.5px;font-weight:600;letter-spacing:0.4px;
+    padding:5px 10px;border-radius:20px;margin-right:14px;
+  }
+  .status-live{background:rgba(63,93,69,0.25);color:#B9D6BC;}
+  .status-snapshot{background:rgba(168,121,31,0.25);color:#EBCB86;}
+  .status-dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .snapshot-banner{
+    background:var(--amber-pale);color:var(--amber);border:1px solid var(--amber);
+    border-radius:6px;padding:10px 16px;font-size:12.5px;margin-bottom:24px;
+    display:none;
+  }
+
+  main{max-width:1280px;margin:0 auto;padding:40px 44px 80px;}
+
+  /* ---------- Overview headings ---------- */
+  .page-head{margin-bottom:28px;}
+  .eyebrow{
+    font-size:11px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--gold-deep);font-weight:700;margin-bottom:8px;
+  }
+  h1.title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:36px;
+    margin:0 0 8px;
+    color:var(--charcoal);
+  }
+  .subtitle{color:var(--charcoal-soft);font-size:14.5px;max-width:640px;line-height:1.6;}
+
+  /* ---------- KPI strip ---------- */
+  .kpi-strip{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+    margin:28px 0 40px;
+    box-shadow:var(--shadow);
+  }
+  .kpi-tile{
+    background:var(--white);
+    padding:22px 18px;
+    text-align:center;
+  }
+  .kpi-num{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:30px;
+    color:var(--gold-deep);
+    line-height:1;
+  }
+  .kpi-num.neg{color:var(--brick);}
+  .kpi-label{
+    margin-top:8px;
+    font-size:10px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--charcoal-soft);
+    font-weight:600;
+  }
+
+  /* ---------- Chart panel ---------- */
+  .panel{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:26px 28px;
+    margin-bottom:40px;
+    box-shadow:var(--shadow);
+  }
+  .panel h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 4px;
+  }
+  .panel .panel-sub{font-size:12.5px;color:var(--charcoal-soft);margin-bottom:18px;}
+  .chart-wrap{position:relative;}
+
+  /* ---------- Region sections ---------- */
+  .region-head{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    margin:36px 0 16px;
+    border-bottom:2px solid var(--gold);
+    padding-bottom:8px;
+  }
+  .region-head h3{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:20px;
+    margin:0;
+    color:var(--gold-deep);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .region-count{font-size:12px;color:var(--charcoal-soft);}
+
+  .camp-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:16px;
+  }
+  .camp-card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-top:3px solid var(--gold);
+    border-radius:6px;
+    padding:18px 18px 16px;
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .camp-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+  .camp-card:focus-visible{outline:2px solid var(--gold-deep);outline-offset:2px;}
+  .camp-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .camp-code{
+    font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--charcoal-soft);font-weight:700;
+  }
+  .camp-name{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:16.5px;
+    line-height:1.25;
+    color:var(--charcoal);
+  }
+  .gauge-badge{display:flex;align-items:center;gap:10px;}
+  .gauge-num{font-family:'Fraunces',serif;font-weight:600;font-size:14px;}
+  .result-pill{
+    display:inline-block;
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:0.8px;
+    text-transform:uppercase;
+    padding:3px 9px;
+    border-radius:20px;
+    align-self:flex-start;
+  }
+  .pill-pass{background:var(--forest-pale);color:var(--forest);}
+  .pill-conditional{background:var(--amber-pale);color:var(--amber);}
+  .pill-fail{background:var(--brick-pale);color:var(--brick);}
+  .pill-none{background:#EDEAE2;color:#8A8272;}
+  .camp-sub{font-size:11px;color:var(--charcoal-soft);}
+  .canteen-flag{font-size:9.5px;font-weight:700;letter-spacing:0.3px;margin-top:-2px;}
+  .canteen-ok{color:var(--forest);}
+  .canteen-warn{color:var(--brick);}
+
+  .empty-region-note{font-size:12.5px;color:var(--charcoal-soft);font-style:italic;padding:8px 0 20px;}
+
+  /* ---------- Detail view ---------- */
+  #campDetail{display:none;}
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12.5px;font-weight:600;color:var(--gold-deep);
+    text-decoration:none;cursor:pointer;margin-bottom:18px;
+    letter-spacing:0.3px;
+  }
+  .back-link:hover{color:var(--charcoal);}
+
+  .detail-head{
+    display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px;
+    margin-bottom:8px;
+  }
+  .detail-head h1{margin:0 0 4px;}
+  .detail-meta{font-size:13px;color:var(--charcoal-soft);}
+  .detail-people{
+    text-align:right;font-size:12.5px;color:var(--charcoal-soft);line-height:1.7;
+  }
+  .detail-people strong{color:var(--charcoal);font-weight:600;}
+
+  .kpi-row{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+    margin:26px 0 36px;
+    box-shadow:var(--shadow);
+  }
+  .kpi-cell{background:var(--white);padding:20px 12px;text-align:center;}
+  .kpi-cell .val{font-family:'Fraunces',serif;font-weight:600;font-size:24px;color:var(--gold-deep);}
+  .kpi-cell .val.result-pass{color:var(--forest);}
+  .kpi-cell .val.result-conditional{color:var(--amber);}
+  .kpi-cell .val.result-fail{color:var(--brick);}
+  .kpi-cell .lbl{margin-top:6px;font-size:9.5px;letter-spacing:0.8px;text-transform:uppercase;color:var(--charcoal-soft);font-weight:600;}
+
+  .chart-grid{
+    display:grid;
+    grid-template-columns:1fr 1.3fr;
+    gap:20px;
+    margin-bottom:22px;
+  }
+  @media (max-width:860px){.chart-grid{grid-template-columns:1fr;}}
+
+  .callout{
+    background:var(--cream-deep);
+    border-left:4px solid var(--gold);
+    border-radius:0 6px 6px 0;
+    padding:14px 18px;
+    font-size:13.5px;
+    color:var(--charcoal);
+    margin-bottom:36px;
+  }
+  .callout strong{color:var(--gold-deep);}
+
+  .canteen-banner{
+    border-radius:6px;padding:12px 18px;font-size:13.5px;font-weight:600;
+    margin:0 0 20px;border-left:4px solid var(--gold);
+  }
+  .canteen-banner.ok{background:var(--forest-pale);color:var(--forest);border-left-color:var(--forest);}
+  .canteen-banner.warn{background:var(--brick-pale);color:var(--brick);border-left-color:var(--brick);}
+  .canteen-banner.none{background:var(--cream-deep);color:var(--charcoal-soft);}
+
+  footer{
+    text-align:center;
+    font-size:11px;
+    color:var(--charcoal-soft);
+    padding:30px 20px 50px;
+    letter-spacing:0.3px;
+  }
+
+  @media (max-width:900px){
+    .kpi-strip,.kpi-row{grid-template-columns:repeat(3,1fr);}
+  }
+  @media (max-width:560px){
+    main{padding:28px 18px 60px;}
+    header.top-bar{padding:18px 20px;}
+    .kpi-strip,.kpi-row{grid-template-columns:repeat(2,1fr);}
+    .detail-people{text-align:left;}
+  }
+
+  @media print{
+    .print-btn{display:none;}
+    header.top-bar{background:var(--charcoal) !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .camp-card{break-inside:avoid;}
+    body{background:#fff;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top-bar">
+  <div class="brand">
+    <span class="wordmark">elewana</span>
+    <span class="tagline">Operations · Head Chef Monthly Shift Report</span>
+  </div>
+  <div style="display:flex;align-items:center;">
+    <span class="status-badge status-snapshot" id="statusBadge" style="display:none;"><span class="status-dot"></span><span id="statusText">Loading…</span></span>
+    <div class="meta-block">
+      Prepared for <strong>Board &amp; Director Review</strong><br>
+      <span id="reportDate"></span>
+    </div>
+    <button class="print-btn" onclick="window.print()">Export / Print</button>
+  </div>
+</header>
+
+<main>
+  <div class="snapshot-banner" id="snapshotBanner">
+    Showing a saved snapshot — live data from the Google Sheet could not be reached. Figures may be out of date.
+  </div>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section id="overview">
+    <div class="page-head">
+      <div class="eyebrow">Group Summary</div>
+      <h1 class="title display">Camp Performance Overview</h1>
+      <p class="subtitle">Consolidated Head Chef monthly shift reports — kitchen feedback and HACCP compliance — across every property. Select a camp below to open its full report.</p>
+    </div>
+
+    <div class="kpi-strip" id="kpiStrip"></div>
+
+    <div class="panel">
+      <h2 class="display">Overall Score by Camp</h2>
+      <div class="panel-sub">Latest reported month per camp, ranked. Dashed line marks the 75% Pass/Fail threshold.</div>
+      <div class="chart-wrap" style="height:420px;">
+        <canvas id="rankChart"></canvas>
+      </div>
+    </div>
+
+    <div id="regions"></div>
+  </section>
+
+  <!-- ============ CAMP DETAIL ============ -->
+  <section id="campDetail">
+    <a class="back-link" onclick="showOverview()">&larr; Back to Overview</a>
+
+    <div class="detail-head">
+      <div>
+        <div class="eyebrow" id="detailEyebrow">Camp Report</div>
+        <h1 class="title display" id="detailName">—</h1>
+        <div class="detail-meta" id="detailMeta">—</div>
+      </div>
+      <div class="detail-people" id="detailPeople"></div>
+    </div>
+
+    <div class="kpi-row" id="detailKpis"></div>
+
+    <div class="chart-grid">
+      <div class="panel">
+        <h2 class="display">Kitchen Feedback Touchpoints</h2>
+        <div class="panel-sub">Section B of the monthly report, scored 1–5, shown here as %.</div>
+        <div class="chart-wrap" style="height:300px;">
+          <canvas id="kitchenChart"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <h2 class="display">HACCP Compliance by Section</h2>
+        <div class="panel-sub">Carried over from that month's HACCP Checklist.</div>
+        <div class="chart-wrap" style="height:300px;">
+          <canvas id="haccpChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout" id="highlightCallout"></div>
+
+    <div class="canteen-banner" id="canteenBanner"></div>
+    <div class="kpi-row" id="canteenKpis" style="grid-template-columns:repeat(2,1fr);margin-bottom:20px;"></div>
+    <div class="panel">
+      <h2 class="display">Staff Canteen HACCP by Section</h2>
+      <div class="panel-sub">Separate monthly checklist for the staff canteen — required in addition to the main kitchen HACCP audit.</div>
+      <div class="chart-wrap" style="height:300px;">
+        <canvas id="canteenChart"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="display">Overall Score Trend</h2>
+      <div class="panel-sub">All reported months for this camp.</div>
+      <div class="chart-wrap" style="height:280px;">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Elewana Collection &middot; Head Chef Monthly Shift Report Dashboard &middot; Confidential — prepared for internal board review
+</footer>
+
+<script>
+// ======================================================================
+// CONFIG — paste your published Google Sheet CSV link here
+// ======================================================================
+// In Google Sheets: File > Share > Publish to web > select the
+// "Monthly Reports Data" tab > format "Comma-separated values (.csv)" > Publish.
+// Copy the link it gives you and paste it below, inside the quotes.
+const SHEET_CSV_URL = "PASTE_YOUR_PUBLISHED_CSV_LINK_HERE";
+
+// Static reference data — camps, touchpoints, HACCP sections never change month to month
+const CAMPS_META = [{"code": "ACL", "name": "Arusha Coffee Lodge", "region": "Tanzania"}, {"code": "TTT", "name": "Tarangire Treetops", "region": "Tanzania"}, {"code": "TMN", "name": "The Manor at Ngorongoro", "region": "Tanzania"}, {"code": "SPC", "name": "Serengeti Pioneer Camp", "region": "Tanzania"}, {"code": "SMC", "name": "Serengeti Migration Camp", "region": "Tanzania"}, {"code": "SXR", "name": "Serengeti Explorer", "region": "Tanzania"}, {"code": "NXR", "name": "Ngorongoro Explorer", "region": "Tanzania"}, {"code": "KLZ", "name": "Kilindi Zanzibar", "region": "Tanzania"}, {"code": "EKM", "name": "Elsa's Kopje Meru", "region": "Kenya"}, {"code": "TCA", "name": "Tortilis Camp Amboseli", "region": "Kenya"}, {"code": "SRM", "name": "Sand River Masai Mara", "region": "Kenya"}, {"code": "EPC", "name": "Elephant Pepper Camp", "region": "Kenya"}, {"code": "LEPC", "name": "Little Elephant Pepper Camp", "region": "Kenya"}, {"code": "LTC", "name": "Loisaba Tented Camp", "region": "Kenya"}, {"code": "LSB", "name": "Loisaba Star Beds", "region": "Kenya"}, {"code": "LLS", "name": "Loisaba Lodo Springs", "region": "Kenya"}, {"code": "LSC", "name": "Lewa Safari Camp", "region": "Kenya"}, {"code": "KHL", "name": "Kifaru House Lewa", "region": "Kenya"}];
+const TOUCHPOINTS_META = ["Food Quality & Presentation", "Menu Execution & Consistency", "Guest / Client Feedback & Satisfaction", "Team Performance & Morale", "Communication & Leadership", "Punctuality & Service Timing", "Kitchen Organisation & Daily Cleanliness", "Cost Control & Wastage Management"];
+const HACCP_META = ["Personal Hygiene & Staff Practices", "Food Storage — Dry Stores", "Cold Storage — Fridges & Freezers", "Food Preparation & Cross-Contamination", "Cooking, Holding & Service Temps", "Cleaning & Sanitation", "Pest Control", "Equipment Maintenance & Safety", "Waste Management", "Water, Ice & Supplier Controls", "Documentation & HACCP Records"];
+const CANTEEN_META = HACCP_META; // same 11 compliance categories, applied to the staff canteen
+
+// Fallback snapshot — used only if the live Google Sheet can't be reached
+// (no internet, link not set up yet, or the sheet isn't published). Keeps
+// the dashboard usable and clearly labelled rather than showing a blank page.
+const FALLBACK_REPORTS = [{"Camp Code": "LSC", "Camp Name": "Lewa Safari Camp", "Region": "Kenya", "Report Month": "2026-04", "Head Chef": "M. Otieno", "General Manager": "J. Carter", "KT1": 4, "KT2": 4, "KT3": 3, "KT4": 4, "KT5": 4, "KT6": 3, "KT7": 4, "KT8": 4, "Kitchen Feedback %": 75, "HC1": 86, "HC2": 88, "HC3": 90, "HC4": 85, "HC5": 87, "HC6": 89, "HC7": 92, "HC8": 84, "HC9": 90, "HC10": 95, "HC11": 86, "HACCP %": 88.3636363636364, "CC1": 88, "CC2": 86, "CC3": 89, "CC4": 84, "CC5": 86, "CC6": 88, "CC7": 90, "CC8": 83, "CC9": 88, "CC10": 93, "CC11": 85, "Canteen HACCP %": 87.2727272727273, "Canteen Completed?": "Yes", "Open Maintenance Issues": 2, "Staff Recognitions": 1, "Kitchen Weight %": 40, "HACCP Weight %": 60, "Overall Score %": 83, "Result": "CONDITIONAL", "Key": "LSC|202604", "Example?": "Example"}, {"Camp Code": "LSC", "Camp Name": "Lewa Safari Camp", "Region": "Kenya", "Report Month": "2026-05", "Head Chef": "M. Otieno", "General Manager": "J. Carter", "KT1": 4, "KT2": 4, "KT3": 4, "KT4": 4, "KT5": 4, "KT6": 4, "KT7": 4, "KT8": 3, "Kitchen Feedback %": 77.5, "HC1": 88, "HC2": 88, "HC3": 92, "HC4": 86, "HC5": 88, "HC6": 90, "HC7": 92, "HC8": 85, "HC9": 90, "HC10": 96, "HC11": 88, "HACCP %": 89.3636363636364, "CC1": 89, "CC2": 87, "CC3": 90, "CC4": 85, "CC5": 87, "CC6": 89, "CC7": 91, "CC8": 84, "CC9": 89, "CC10": 94, "CC11": 86, "Canteen HACCP %": 88.2727272727273, "Canteen Completed?": "Yes", "Open Maintenance Issues": 1, "Staff Recognitions": 2, "Kitchen Weight %": 40, "HACCP Weight %": 60, "Overall Score %": 84.6, "Result": "CONDITIONAL", "Key": "LSC|202605", "Example?": "Example"}, {"Camp Code": "LSC", "Camp Name": "Lewa Safari Camp", "Region": "Kenya", "Report Month": "2026-06", "Head Chef": "M. Otieno", "General Manager": "J. Carter", "KT1": 4, "KT2": 4, "KT3": 4, "KT4": 4, "KT5": 4, "KT6": 4, "KT7": 4, "KT8": 4, "Kitchen Feedback %": 80, "HC1": 90, "HC2": 90, "HC3": 93, "HC4": 88, "HC5": 90, "HC6": 91, "HC7": 94, "HC8": 87, "HC9": 92, "HC10": 97, "HC11": 89, "HACCP %": 91, "CC1": 91, "CC2": 89, "CC3": 92, "CC4": 87, "CC5": 89, "CC6": 90, "CC7": 93, "CC8": 86, "CC9": 91, "CC10": 96, "CC11": 88, "Canteen HACCP %": 90.1818181818182, "Canteen Completed?": "Yes", "Open Maintenance Issues": 1, "Staff Recognitions": 2, "Kitchen Weight %": 40, "HACCP Weight %": 60, "Overall Score %": 86.6, "Result": "CONDITIONAL", "Key": "LSC|202606", "Example?": "Example"}, {"Camp Code": "SPC", "Camp Name": "Serengeti Pioneer Camp", "Region": "Tanzania", "Report Month": "2026-06", "Head Chef": "D. Mollel", "General Manager": "H. Reeves", "KT1": 4, "KT2": 3, "KT3": 4, "KT4": 3, "KT5": 4, "KT6": 4, "KT7": 3, "KT8": 3, "Kitchen Feedback %": 70, "HC1": 82, "HC2": 85, "HC3": 80, "HC4": 84, "HC5": 83, "HC6": 86, "HC7": 88, "HC8": 80, "HC9": 85, "HC10": 90, "HC11": 83, "HACCP %": 84.1818181818182, "CC1": null, "CC2": null, "CC3": null, "CC4": null, "CC5": null, "CC6": null, "CC7": null, "CC8": null, "CC9": null, "CC10": null, "CC11": null, "Canteen HACCP %": null, "Canteen Completed?": "No", "Open Maintenance Issues": 3, "Staff Recognitions": 1, "Kitchen Weight %": 40, "HACCP Weight %": 60, "Overall Score %": 78.5, "Result": "CONDITIONAL", "Key": "SPC|202606", "Example?": "Example"}, {"Camp Code": "TCA", "Camp Name": "Tortilis Camp Amboseli", "Region": "Kenya", "Report Month": "2026-06", "Head Chef": "P. Wambua", "General Manager": "L. Adams", "KT1": 3, "KT2": 3, "KT3": 3, "KT4": 4, "KT5": 3, "KT6": 3, "KT7": 4, "KT8": 3, "Kitchen Feedback %": 65, "HC1": 78, "HC2": 80, "HC3": 76, "HC4": 79, "HC5": 81, "HC6": 82, "HC7": 85, "HC8": 77, "HC9": 80, "HC10": 86, "HC11": 79, "HACCP %": 80.2727272727273, "CC1": 74, "CC2": 76, "CC3": 72, "CC4": 75, "CC5": 77, "CC6": 78, "CC7": 81, "CC8": 73, "CC9": 76, "CC10": 82, "CC11": 75, "Canteen HACCP %": 76.2727272727273, "Canteen Completed?": "Yes", "Open Maintenance Issues": 4, "Staff Recognitions": 0, "Kitchen Weight %": 40, "HACCP Weight %": 60, "Overall Score %": 74.2, "Result": "FAIL", "Key": "TCA|202606", "Example?": "Example"}];
+
+let DATA = { camps: CAMPS_META, touchpoints: TOUCHPOINTS_META, haccpSections: HACCP_META, canteenSections: CANTEEN_META, reports: [] };
+
+document.getElementById('reportDate').textContent = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+
+// ---------- helpers ----------
+function resultOf(score){
+  if(score===null||score===undefined) return null;
+  if(score>=90) return 'PASS';
+  if(score>=75) return 'CONDITIONAL';
+  return 'FAIL';
+}
+function resultColor(r){
+  return r==='PASS' ? getCss('--forest') : r==='CONDITIONAL' ? getCss('--amber') : r==='FAIL' ? getCss('--brick') : '#9a9382';
+}
+function pillClass(r){
+  return r==='PASS'?'pill-pass':r==='CONDITIONAL'?'pill-conditional':r==='FAIL'?'pill-fail':'pill-none';
+}
+function getCss(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function latestReport(code){
+  const rows = DATA.reports.filter(r=>r['Camp Code']===code);
+  if(!rows.length) return null;
+  return rows.reduce((a,b)=> (b['Report Month'] > a['Report Month'] ? b : a));
+}
+function allReportsFor(code){
+  return DATA.reports.filter(r=>r['Camp Code']===code).sort((a,b)=> a['Report Month'] < b['Report Month'] ? -1 : 1);
+}
+function monthLabel(ym){
+  if(!ym) return '—';
+  const [y,m] = ym.split('-');
+  const d = new Date(parseInt(y), parseInt(m)-1, 1);
+  return d.toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+}
+
+// ---------- SVG gauge ----------
+function gaugeSvg(score, color, size=44){
+  const r = size/2 - 4;
+  const c = size/2;
+  const circumference = 2*Math.PI*r;
+  const pct = score===null ? 0 : Math.max(0,Math.min(100,score))/100;
+  const dash = circumference*pct;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#EDE6D4" stroke-width="4"/>
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="4"
+      stroke-linecap="round" stroke-dasharray="${dash} ${circumference}"
+      transform="rotate(-90 ${c} ${c})"/>
+  </svg>`;
+}
+
+// ---------- KPI strip (overview) ----------
+function renderKpiStrip(){
+  const rows = DATA.camps.map(c=>latestReport(c.code)).filter(Boolean);
+  const totalReports = DATA.reports.length;
+  const campsReporting = new Set(DATA.reports.map(r=>r['Camp Code'])).size;
+  const avgScore = rows.length ? (rows.reduce((s,r)=>s+r['Overall Score %'],0)/rows.length) : 0;
+  const failing = rows.filter(r=>resultOf(r['Overall Score %'])==='FAIL').length;
+  const maint = DATA.reports.reduce((s,r)=>s+(r['Open Maintenance Issues']||0),0);
+  const staff = DATA.reports.reduce((s,r)=>s+(r['Staff Recognitions']||0),0);
+  const canteenMissing = rows.filter(r=>r['Canteen Completed?']==='No').length;
+
+  const tiles = [
+    [totalReports, 'Reports Logged'],
+    [campsReporting + ' / ' + DATA.camps.length, 'Camps Reporting'],
+    [avgScore.toFixed(1)+'%', 'Group Avg Score'],
+    [failing, 'Camps Failing', failing>0],
+    [maint, 'Open Maintenance Issues'],
+    [staff, 'Staff Recognitions'],
+    [canteenMissing, 'Canteen Checks Missing', canteenMissing>0],
+  ];
+  document.getElementById('kpiStrip').innerHTML = tiles.map(t=>`
+    <div class="kpi-tile">
+      <div class="kpi-num${t[2]?' neg':''}">${t[0]}</div>
+      <div class="kpi-label">${t[1]}</div>
+    </div>`).join('');
+}
+
+// ---------- rank chart ----------
+let rankChartInstance;
+function renderRankChart(){
+  const rows = DATA.camps.map(c=>{
+    const rep = latestReport(c.code);
+    return {code:c.code, name:c.name, score: rep? rep['Overall Score %']: null, result: rep? rep['Result']: null};
+  }).filter(r=>r.score!==null).sort((a,b)=>b.score-a.score);
+
+  const ctx = document.getElementById('rankChart');
+  if(rankChartInstance) rankChartInstance.destroy();
+  rankChartInstance = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels: rows.map(r=>`${r.name} (${r.code})`),
+      datasets:[{
+        data: rows.map(r=>r.score),
+        backgroundColor: rows.map(r=>resultColor(r.result)),
+        borderRadius:3,
+        barThickness:16,
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:(c)=> c.parsed.x.toFixed(1)+'%'}}
+      },
+      scales:{
+        x:{min:0,max:100, grid:{color:'#EDE6D4'}, ticks:{font:{family:'Inter'},color:'#5B5347'}},
+        y:{grid:{display:false}, ticks:{font:{family:'Inter',size:11},color:'#2B2721'}}
+      }
+    },
+    plugins:[{
+      id:'thresholdLine',
+      afterDraw(chart){
+        const {ctx, chartArea, scales} = chart;
+        const x = scales.x.getPixelForValue(75);
+        ctx.save();
+        ctx.strokeStyle = '#9C4A3C';
+        ctx.setLineDash([4,4]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+// ---------- region camp grids ----------
+function renderRegions(){
+  const regions = [...new Set(DATA.camps.map(c=>c.region))];
+  const container = document.getElementById('regions');
+  container.innerHTML = regions.map(region=>{
+    const camps = DATA.camps.filter(c=>c.region===region);
+    const cards = camps.map(c=>{
+      const rep = latestReport(c.code);
+      const score = rep ? rep['Overall Score %'] : null;
+      const result = rep ? rep['Result'] : null;
+      const color = resultColor(result);
+      const canteenDone = rep ? rep['Canteen Completed?'] : null;
+      const canteenLine = canteenDone==='Yes' ? '<div class="canteen-flag canteen-ok">Canteen: &#10003; checked</div>'
+        : canteenDone==='No' ? '<div class="canteen-flag canteen-warn">Canteen: &#9888; not checked</div>' : '';
+      return `<div class="camp-card" tabindex="0" role="button" onclick="showCamp('${c.code}')" onkeypress="if(event.key==='Enter')showCamp('${c.code}')">
+        <div class="camp-card-top">
+          <div>
+            <div class="camp-code">${c.code}</div>
+            <div class="camp-name display">${c.name}</div>
+          </div>
+          ${gaugeSvg(score, color, 46)}
+        </div>
+        <div class="camp-sub">${rep ? monthLabel(rep['Report Month']) : 'No reports logged'}</div>
+        <div class="gauge-badge">
+          <span class="gauge-num" style="color:${color}">${score!==null? score.toFixed(1)+'%':'—'}</span>
+          <span class="result-pill ${pillClass(result)}">${result || 'No data'}</span>
+        </div>
+        ${canteenLine}
+      </div>`;
+    }).join('');
+    return `<div class="region-head"><h3 class="display">${region} Properties</h3><span class="region-count">${camps.length} camps</span></div>
+      <div class="camp-grid">${cards}</div>`;
+  }).join('');
+}
+
+// ---------- camp detail ----------
+let kitchenChartInstance, haccpChartInstance, trendChartInstance, canteenChartInstance;
+
+function showCamp(code){
+  const camp = DATA.camps.find(c=>c.code===code);
+  const rep = latestReport(code);
+  document.getElementById('overview').style.display='none';
+  document.getElementById('campDetail').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  document.getElementById('detailEyebrow').textContent = `${camp.region} Properties · ${camp.code}`;
+  document.getElementById('detailName').textContent = camp.name;
+
+  if(!rep){
+    document.getElementById('detailMeta').textContent = 'No monthly reports logged yet for this camp.';
+    document.getElementById('detailPeople').innerHTML = '';
+    document.getElementById('detailKpis').innerHTML = '';
+    document.getElementById('highlightCallout').innerHTML = '';
+    document.getElementById('canteenBanner').innerHTML = '';
+    document.getElementById('canteenBanner').className = 'canteen-banner';
+    document.getElementById('canteenKpis').innerHTML = '';
+    [kitchenChartInstance,haccpChartInstance,trendChartInstance,canteenChartInstance].forEach(ch=>ch&&ch.destroy());
+    kitchenChartInstance = haccpChartInstance = trendChartInstance = canteenChartInstance = null;
+    return;
+  }
+
+  document.getElementById('detailMeta').textContent = `Head Chef Monthly Shift Report — ${monthLabel(rep['Report Month'])}`;
+  document.getElementById('detailPeople').innerHTML = `<strong>Head Chef:</strong> ${rep['Head Chef']||'—'}<br><strong>General Manager:</strong> ${rep['General Manager']||'—'}`;
+
+  const result = rep['Result'];
+  const resClass = result==='PASS'?'result-pass':result==='CONDITIONAL'?'result-conditional':'result-fail';
+  const kpis = [
+    [rep['Overall Score %'].toFixed(1)+'%','Overall Score',''],
+    [rep['Kitchen Feedback %'].toFixed(1)+'%','Kitchen Feedback',''],
+    [rep['HACCP %'].toFixed(1)+'%','HACCP Compliance',''],
+    [result,'Result',resClass],
+    [rep['Open Maintenance Issues'],'Open Maintenance',''],
+    [rep['Staff Recognitions'],'Staff Recognitions',''],
+  ];
+  document.getElementById('detailKpis').innerHTML = kpis.map(k=>`
+    <div class="kpi-cell"><div class="val ${k[2]}">${k[0]}</div><div class="lbl">${k[1]}</div></div>`).join('');
+
+  // ---- category helper data ----
+  const ktVals = DATA.touchpoints.map((label,i)=> ({label, val: rep['KT'+(i+1)]/5*100}));
+  const hcVals = DATA.haccpSections.map((label,i)=> ({label, val: rep['HC'+(i+1)]}));
+  const all = [...ktVals,...hcVals];
+  const hi = all.reduce((a,b)=>b.val>a.val?b:a);
+  const lo = all.reduce((a,b)=>b.val<a.val?b:a);
+  document.getElementById('highlightCallout').innerHTML =
+    `<strong>Highest-rated:</strong> ${hi.label} (${hi.val.toFixed(0)}%). &nbsp; <strong>Area to watch:</strong> ${lo.label} (${lo.val.toFixed(0)}%).`;
+
+  // ---- kitchen doughnut ----
+  const kCtx = document.getElementById('kitchenChart');
+  if(kitchenChartInstance) kitchenChartInstance.destroy();
+  const palette = ['#B8935A','#8C6A34','#3F5D45','#A8791F','#9C4A3C','#6B8F71','#C7A76B','#5B5347'];
+  kitchenChartInstance = new Chart(kCtx,{
+    type:'doughnut',
+    data:{ labels: ktVals.map(k=>k.label), datasets:[{data: ktVals.map(k=>k.val), backgroundColor:palette, borderColor:'#FFFFFF', borderWidth:2}] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom', labels:{boxWidth:10, font:{size:9.5, family:'Inter'}, color:'#5B5347'}},
+        tooltip:{callbacks:{label:(c)=> c.label+': '+c.parsed.toFixed(0)+'%'}}
+      }
+    }
+  });
+
+  // ---- haccp bar ----
+  const hCtx = document.getElementById('haccpChart');
+  if(haccpChartInstance) haccpChartInstance.destroy();
+  haccpChartInstance = new Chart(hCtx,{
+    type:'bar',
+    data:{ labels: hcVals.map(h=>h.label), datasets:[{data: hcVals.map(h=>h.val), backgroundColor:'#B8935A', borderRadius:3, barThickness:11}] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:(c)=>c.parsed.x.toFixed(0)+'%'}}},
+      scales:{
+        x:{min:0,max:100, grid:{color:'#EDE6D4'}, ticks:{font:{size:9.5,family:'Inter'},color:'#5B5347'}},
+        y:{grid:{display:false}, ticks:{font:{size:9.5,family:'Inter'},color:'#2B2721'}}
+      }
+    }
+  });
+
+  // ---- staff canteen banner + KPIs ----
+  const canteenDone = rep['Canteen Completed?'];
+  const banner = document.getElementById('canteenBanner');
+  if(canteenDone === 'Yes'){
+    banner.className = 'canteen-banner ok';
+    banner.innerHTML = '&#10003; Staff canteen HACCP completed this month';
+  } else if(canteenDone === 'No'){
+    banner.className = 'canteen-banner warn';
+    banner.innerHTML = '&#9888; Staff canteen HACCP NOT completed this month';
+  } else {
+    banner.className = 'canteen-banner none';
+    banner.innerHTML = 'No canteen data recorded yet';
+  }
+  const canteenScore = rep['Canteen HACCP %'];
+  document.getElementById('canteenKpis').innerHTML = `
+    <div class="kpi-cell"><div class="val">${canteenScore!==undefined && !isNaN(canteenScore) ? canteenScore.toFixed(1)+'%' : '—'}</div><div class="lbl">Staff Canteen HACCP Score</div></div>
+    <div class="kpi-cell"><div class="val${canteenDone==='Yes'?' result-pass':canteenDone==='No'?' result-fail':''}">${canteenDone || '—'}</div><div class="lbl">Canteen Checklist Completed?</div></div>`;
+
+  // ---- canteen bar chart ----
+  const ccVals = DATA.canteenSections.map((label,i)=> ({label, val: rep['CC'+(i+1)] || 0}));
+  const ccCtx = document.getElementById('canteenChart');
+  if(canteenChartInstance) canteenChartInstance.destroy();
+  canteenChartInstance = new Chart(ccCtx,{
+    type:'bar',
+    data:{ labels: ccVals.map(c=>c.label), datasets:[{data: ccVals.map(c=>c.val), backgroundColor:'#3F5D45', borderRadius:3, barThickness:11}] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:(c)=>c.parsed.x.toFixed(0)+'%'}}},
+      scales:{
+        x:{min:0,max:100, grid:{color:'#EDE6D4'}, ticks:{font:{size:9.5,family:'Inter'},color:'#5B5347'}},
+        y:{grid:{display:false}, ticks:{font:{size:9.5,family:'Inter'},color:'#2B2721'}}
+      }
+    }
+  });
+
+  // ---- trend line ----
+  const history = allReportsFor(code);
+  const tCtx = document.getElementById('trendChart');
+  if(trendChartInstance) trendChartInstance.destroy();
+  trendChartInstance = new Chart(tCtx,{
+    type:'line',
+    data:{
+      labels: history.map(h=>monthLabel(h['Report Month'])),
+      datasets:[{
+        label:'Overall Score %',
+        data: history.map(h=>h['Overall Score %']),
+        borderColor:'#8C6A34',
+        backgroundColor:'rgba(184,147,90,0.12)',
+        pointBackgroundColor:'#8C6A34',
+        pointRadius:4,
+        fill:true,
+        tension:0.25,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:(c)=>c.parsed.y.toFixed(1)+'%'}}},
+      scales:{
+        y:{min:0,max:100, grid:{color:'#EDE6D4'}, ticks:{font:{family:'Inter'},color:'#5B5347'}},
+        x:{grid:{display:false}, ticks:{font:{family:'Inter'},color:'#2B2721'}}
+      }
+    }
+  });
+}
+
+function showOverview(){
+  document.getElementById('campDetail').style.display='none';
+  document.getElementById('overview').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ---------- init ----------
+// ---------- CSV fetch & transform ----------
+const NUMERIC_FIELDS = ["Kitchen Feedback %","HACCP %","Canteen HACCP %","Open Maintenance Issues","Staff Recognitions",
+  "Kitchen Weight %","HACCP Weight %","Overall Score %"]
+  .concat([1,2,3,4,5,6,7,8].map(i=>"KT"+i))
+  .concat(Array.from({length:11},(_,i)=>"HC"+(i+1)))
+  .concat(Array.from({length:11},(_,i)=>"CC"+(i+1)));
+
+function normalizeMonth(raw){
+  if(!raw) return "";
+  const s = String(raw).trim();
+  // already YYYY-MM or YYYY-MM-DD
+  let m = s.match(/^(\d{4})-(\d{2})/);
+  if(m) return `${m[1]}-${m[2]}`;
+  // M/D/YYYY or MM/DD/YYYY
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m) return `${m[3]}-${m[1].padStart(2,'0')}`;
+  // fallback: let the browser try
+  const d = new Date(s);
+  if(!isNaN(d)) return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  return s;
+}
+
+function transformRows(rows){
+  return rows
+    .filter(r => r["Camp Code"] && String(r["Camp Code"]).trim() !== "")
+    .map(r=>{
+      const out = {...r};
+      NUMERIC_FIELDS.forEach(f=>{ if(out[f]!==undefined && out[f]!=="") out[f] = parseFloat(out[f]); });
+      out["Report Month"] = normalizeMonth(out["Report Month"]);
+      return out;
+    })
+    .filter(r => r["Overall Score %"]!==undefined && !isNaN(r["Overall Score %"]));
+}
+
+function setStatus(mode, when){
+  const badge = document.getElementById('statusBadge');
+  const text = document.getElementById('statusText');
+  const banner = document.getElementById('snapshotBanner');
+  badge.style.display = 'inline-flex';
+  if(mode==='live'){
+    badge.className = 'status-badge status-live';
+    text.textContent = 'Live · updated ' + when;
+    banner.style.display = 'none';
+  } else {
+    badge.className = 'status-badge status-snapshot';
+    text.textContent = 'Snapshot data';
+    banner.style.display = 'block';
+  }
+}
+
+async function loadData(){
+  const useFallback = () => {
+    DATA.reports = FALLBACK_REPORTS;
+    setStatus('snapshot');
+    renderAll();
+  };
+
+  if(!SHEET_CSV_URL || SHEET_CSV_URL.indexOf('PASTE_YOUR') === 0){
+    useFallback();
+    return;
+  }
+
+  try{
+    const res = await fetch(SHEET_CSV_URL, {cache:"no-store"});
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const csvText = await res.text();
+    const parsed = Papa.parse(csvText, {header:true, skipEmptyLines:true});
+    const rows = transformRows(parsed.data);
+    if(!rows.length) throw new Error('No usable rows in sheet');
+    DATA.reports = rows;
+    setStatus('live', new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}));
+    renderAll();
+  }catch(err){
+    console.warn('Live data fetch failed, using snapshot:', err);
+    useFallback();
+  }
+}
+
+function renderAll(){
+  renderKpiStrip();
+  renderRankChart();
+  renderRegions();
+}
+
+loadData();
+</script>
+</body>
+</html>
